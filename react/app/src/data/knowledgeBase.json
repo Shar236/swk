@@ -1,0 +1,42 @@
+[
+  {
+    "keywords": ["rahi", "what is", "about"],
+    "answer": "RAHI (Karigar 360) is a mission-driven platform connecting Belief, Fairness, and Work with Dignity. We provide an ethical alternative to gig-economy platforms by ensuring worker autonomy and fair pay."
+  },
+  {
+    "keywords": ["signup", "register", "account", "join"],
+    "answer": "To join the RAHI community, click 'Register' at the top. You can sign up as a User to book help, or as a Karigar (Professional) to offer your skills and earn with dignity."
+  },
+  {
+    "keywords": ["login", "sign in", "access"],
+    "answer": "Click the 'Login' button at the top right to access your dashboard. You'll need your registered email and password."
+  },
+  {
+    "keywords": ["service", "booking", "book", "help"],
+    "answer": "We offer a wide range of services from vetted professionals. Visit our Services page to browse categories like plumbing, electrical, and more. Once you find what you need, booking takes just a few clicks!"
+  },
+  {
+    "keywords": ["payment", "pay", "money", "salary"],
+    "answer": "RAHI ensures workers receive immediate payments. We believe in same-day payouts to empower our Karigars and maintain a transparent, trust-based financial model."
+  },
+  {
+    "keywords": ["track", "location", "status", "where is"],
+    "answer": "After booking, you can use our real-time Tracking page to see exactly where your professional is and their estimated arrival time. Trust through transparency is our core principle."
+  },
+  {
+    "keywords": ["investor", "pitch", "deck", "report"],
+    "answer": "Our Investor Pitch Deck and Overview Reports detail the RAHI model of 'Connecting Belief, Fairness & Work with Dignity'. We are focused on human trust rather than just algorithmic marketplaces."
+  },
+  {
+    "keywords": ["interface", "flow", "how it works"],
+    "answer": "The RAHI interface is designed for simplicity. From the home page, you can search for services, view professional profiles, and book directly. Our 'Step-by-Step Interface Flow' document ensures a seamless experience for both users and workers."
+  },
+  {
+    "keywords": ["values", "mission", "ethical"],
+    "answer": "RAHI's mission is to provide 'Urgent Human Help' while preserving the dignity of workers. Unlike other platforms, we don't use punitive algorithms; we empower workers to control their own time and pricing."
+  },
+  {
+    "keywords": ["karigar", "worker", "professional"],
+    "answer": "A Karigar on RAHI is more than a service provider; they are empowered professionals who own their work. We provide them with the tools to grow their business with dignity and support."
+  }
+]

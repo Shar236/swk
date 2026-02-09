@@ -1,0 +1,259 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { useState, useEffect, ReactNode } from 'react';
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Services from "./pages/Services";
+import BookService from "./pages/BookService";
+import EnhancedCustomerDashboard from "./pages/EnhancedCustomerDashboard";
+import EnhancedBookService from "./pages/EnhancedBookService";
+import EnhancedWorkerShowcase from "./pages/EnhancedWorkerShowcase";
+import EnhancedLogin from "./pages/EnhancedLogin";
+import Tracking from "./pages/Tracking";
+import NotificationDemo from "./pages/NotificationDemo";
+import { TestChatbot } from "./pages/TestChatbot";
+import TestPage from "./pages/TestPage";
+import ACServicePage from "./pages/ACServicePage";
+import LiveTrackingPage from "./pages/LiveTrackingPage";
+import WorkerOnboardingPage from "./pages/worker/WorkerOnboardingPage";
+import WorkerDashboard from "./pages/worker/WorkerDashboard";
+import WorkerJobsPage from "./pages/worker/WorkerJobsPage";
+import WorkerEarningsPage from "./pages/worker/WorkerEarningsPage";
+import WorkerSchedulePage from "./pages/worker/WorkerSchedulePage";
+import WorkerProfilePage from "./pages/worker/WorkerProfilePage";
+import WorkerNotificationsPage from "./pages/worker/WorkerNotificationsPage";
+import WorkerLayout from "@/components/layout/WorkerLayout";
+
+// Thekedar Imports
+import ThekedarProtectedRoute from "@/components/layout/ThekedarProtectedRoute";
+import ThekedarLayout from "@/components/layout/ThekedarLayout";
+import EnhancedThekadarDashboard from "./pages/thekedar/EnhancedThekadarDashboard";
+import DirectThekedarDashboard from "./pages/thekedar/DirectThekedarDashboard";
+import StandaloneThekedarDashboard from "./pages/thekedar/StandaloneThekedarDashboard";
+import ThekedarOnboardingPage from "./pages/thekedar/ThekedarOnboardingPage";
+import EnhancedSiteVisits from "./pages/thekedar/EnhancedSiteVisits";
+import ThekedarTeamManagement from "./pages/thekedar/ThekedarTeamManagement";
+import ThekedarEarnings from "./pages/thekedar/ThekedarEarnings";
+import ThekedarProfile from "./pages/thekedar/ThekedarProfile";
+import ThekedarProjects from "./pages/thekedar/ThekedarProjects";
+import ThekedarAnalytics from "./pages/thekedar/ThekedarAnalytics";
+import ThekedarSchedule from "./pages/thekedar/ThekedarSchedule";
+import ThekedarSettings from "./pages/thekedar/ThekedarSettings";
+import ServiceCardDemo from "./pages/ServiceCardDemo";
+import JobLog from "@/components/job-log/JobLog";
+import WorkerMapDashboard from "@/components/maps/WorkerMapDashboard";
+import ThekedarMapHub from "@/components/maps/ThekedarMapHub";
+import WorkerSettingsPage from "./pages/worker/WorkerSettingsPage";
+
+// Initialize QueryClient outside component to prevent re-creation loops
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Protected Route Component
+const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role?: string }) => {
+  const { user, loading, profile } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>; // You can replace this with a spinner
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect user based on role if accessing home page
+  if (!profile) {
+    return <div>Loading profile...</div>;
+  }
+  
+  if (role && profile.role !== role) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
+
+// Worker Protected Route Component
+const WorkerProtectedRoute = ({ children, allowOnboarding = false }: { children: ReactNode, allowOnboarding?: boolean }) => {
+  const { user, profile, loading, hasCompletedOnboarding } = useAuth();
+  
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  
+  useEffect(() => {
+    if (user && profile && profile.role === 'worker') {
+      hasCompletedOnboarding(user.id).then(result => {
+        setOnboardingComplete(result);
+        setCheckingOnboarding(false);
+      }).catch(() => {
+        setCheckingOnboarding(false);
+      });
+    } else {
+      setCheckingOnboarding(false);
+    }
+  }, [user, profile, hasCompletedOnboarding]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Wait for profile to load
+  if (!profile) {
+    return <div>Loading profile...</div>;
+  }
+  
+  if (profile.role !== 'worker') {
+    // If user is not a worker, redirect to appropriate page
+    return <Navigate to="/" replace />;
+  }
+  
+  if (checkingOnboarding) {
+    return <div>Loading...</div>;
+  }
+  
+  // If worker hasn't completed onboarding, redirect to onboarding
+  // unless this is the onboarding page itself
+  if (!onboardingComplete && !allowOnboarding) {
+    return <Navigate to="/worker/onboarding" replace />;
+  }
+  
+  return children;
+};
+
+// Role-Based Home Redirect Component
+const RoleBasedHome = () => {
+  const { user, profile, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  // If user is authenticated but no profile exists, redirect to login to complete registration
+  if (user && !profile) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // If no user is authenticated, show the default index
+  if (!user) {
+    return <Index />;
+  }
+  
+  // If user is authenticated and has a profile, redirect based on role
+  if (profile.role === 'worker') {
+    return <Navigate to="/worker/dashboard" replace />;
+  } else if (profile.role === 'thekedar') {
+    return <Navigate to="/thekedar/dashboard" replace />;
+  } else {
+    // For customers and other roles, show the default index
+    return <Index />;
+  }
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<RoleBasedHome />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/book/:serviceId" element={<BookService />} />
+                  <Route path="/enhanced-book/:serviceId" element={<EnhancedBookService />} />
+                  <Route path="/customer-dashboard" element={<EnhancedCustomerDashboard />} />
+                  <Route path="/workers" element={<EnhancedWorkerShowcase />} />
+                  <Route path="/enhanced-login" element={<EnhancedLogin />} />
+                  <Route path="/tracking/:bookingId" element={<Tracking />} />
+                  <Route path="/notifications/demo" element={<NotificationDemo />} />
+                  <Route path="/test-chatbot" element={<TestChatbot />} />
+                  <Route path="/test" element={<TestPage />} />
+                  <Route path="/ac-services" element={<ACServicePage />} />
+                  <Route path="/live-tracking" element={<LiveTrackingPage />} />
+                  <Route path="/service-card-demo" element={<ServiceCardDemo />} />
+                  <Route path="/thekedar-direct" element={<DirectThekedarDashboard />} />
+                  <Route path="/thekedar-standalone" element={<StandaloneThekedarDashboard />} />
+                  <Route path="/worker/onboarding" element={
+                    <WorkerProtectedRoute allowOnboarding={true}>
+                      <WorkerOnboardingPage />
+                    </WorkerProtectedRoute>
+                  } />
+                  
+                  {/* Worker Routes */}
+                  <Route path="/worker" element={
+                    <WorkerProtectedRoute>
+                      <WorkerLayout />
+                    </WorkerProtectedRoute>
+                  }>
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<WorkerDashboard />} />
+                    <Route path="jobs" element={<WorkerJobsPage />} />
+                    <Route path="earnings" element={<WorkerEarningsPage />} />
+                    <Route path="schedule" element={<WorkerSchedulePage />} />
+                    <Route path="profile" element={<WorkerProfilePage />} />
+                    <Route path="notifications" element={<WorkerNotificationsPage />} />
+                    <Route path="job-log" element={<JobLog />} />
+                    <Route path="map" element={<WorkerMapDashboard />} />
+                    <Route path="settings" element={<WorkerSettingsPage />} />
+                  </Route>
+                  
+                  {/* Thekedar Routes */}
+                  <Route path="/thekedar/onboarding" element={
+                    <ThekedarProtectedRoute allowOnboarding={true}>
+                      <ThekedarOnboardingPage />
+                    </ThekedarProtectedRoute>
+                  } />
+                  
+                  <Route path="/thekedar" element={
+                    <ThekedarProtectedRoute>
+                      <ThekedarLayout />
+                    </ThekedarProtectedRoute>
+                  }>
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<EnhancedThekadarDashboard />} />
+                    <Route path="site-visits" element={<EnhancedSiteVisits />} />
+                    <Route path="team" element={<ThekedarTeamManagement />} />
+                    <Route path="projects" element={<ThekedarProjects />} />
+                    <Route path="analytics" element={<ThekedarAnalytics />} />
+                    <Route path="earnings" element={<ThekedarEarnings />} />
+                    <Route path="schedule" element={<ThekedarSchedule />} />
+                    <Route path="map" element={<ThekedarMapHub />} />
+                    <Route path="profile" element={<ThekedarProfile />} />
+                    <Route path="settings" element={<ThekedarSettings />} />
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;

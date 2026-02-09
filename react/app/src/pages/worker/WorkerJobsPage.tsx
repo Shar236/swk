@@ -1,0 +1,571 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Package, Clock, CheckCircle, AlertCircle, FileText, Phone, MessageCircle, DollarSign } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+
+const WorkerJobsPage = () => {
+  const { user, profile } = useAuth();
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('all');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user && profile?.role === 'worker') {
+      fetchJobs();
+    }
+  }, [user, profile]);
+
+  const fetchJobs = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Fetch worker profile to get worker ID
+      const { data: workerProfile, error: profileError } = await supabase
+        .from('worker_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!workerProfile || profileError) {
+        console.error('Error fetching worker profile:', profileError);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all bookings for this worker
+      const { data: jobsData, error: jobsError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          service_id,
+          customer_id,
+          status,
+          scheduled_date,
+          scheduled_time,
+          total_amount,
+          address,
+          services (name, description),
+          customers (full_name, phone, email)
+        `)
+        .eq('worker_id', workerProfile.id)
+        .order('scheduled_date', { ascending: true })
+        .order('scheduled_time', { ascending: true });
+
+      if (jobsError) {
+        console.error('Error fetching jobs:', jobsError);
+      } else {
+        setJobs(jobsData || []);
+        setFilteredJobs(jobsData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (jobs.length > 0) {
+      switch (activeTab) {
+        case 'pending':
+          setFilteredJobs(jobs.filter(job => ['pending', 'accepted', 'in_progress'].includes(job.status)));
+          break;
+        case 'completed':
+          setFilteredJobs(jobs.filter(job => job.status === 'completed'));
+          break;
+        case 'cancelled':
+          setFilteredJobs(jobs.filter(job => job.status === 'cancelled'));
+          break;
+        default:
+          setFilteredJobs(jobs);
+      }
+    } else {
+      setFilteredJobs([]);
+    }
+  }, [activeTab, jobs]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'accepted':
+        return 'bg-blue-100 text-blue-800';
+      case 'in_progress':
+        return 'bg-purple-100 text-purple-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleJobAction = async (jobId: string, action: string) => {
+    try {
+      if (!user) return;
+
+      // Update job status based on action
+      let newStatus = '';
+      switch (action) {
+        case 'accept':
+          newStatus = 'accepted';
+          break;
+        case 'start':
+          newStatus = 'in_progress';
+          break;
+        case 'complete':
+          newStatus = 'completed';
+          break;
+        case 'cancel':
+          newStatus = 'cancelled';
+          break;
+        default:
+          return;
+      }
+
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', jobId);
+
+      if (error) {
+        console.error('Error updating job status:', error);
+        return;
+      }
+
+      // Refresh jobs
+      fetchJobs();
+    } catch (error) {
+      console.error('Error handling job action:', error);
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-6 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">My Jobs</h1>
+        <p className="text-gray-600">Manage your service requests and appointments</p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="all">All Jobs</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Jobs</CardTitle>
+              <CardDescription>Overview of all your service requests</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : filteredJobs.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredJobs.map((job) => (
+                    <Card key={job.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-bold text-lg">{job.services?.name || 'Service'}</h3>
+                              <Badge className={getStatusColor(job.status)}>
+                                {job.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-600 mb-1">{job.services?.description || 'Service description'}</p>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{new Date(job.scheduled_date).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{job.scheduled_time}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{job.address || 'Address not specified'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4" />
+                                <span>₹{job.total_amount}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2">
+                              <p className="text-sm font-medium">Customer: {job.customers?.full_name || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">Contact: {job.customers?.phone || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 min-w-[150px]">
+                            {job.status === 'pending' && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleJobAction(job.id, 'accept')}
+                                >
+                                  Accept
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => handleJobAction(job.id, 'cancel')}
+                                >
+                                  Decline
+                                </Button>
+                              </>
+                            )}
+                            {job.status === 'accepted' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleJobAction(job.id, 'start')}
+                              >
+                                Start Job
+                              </Button>
+                            )}
+                            {job.status === 'in_progress' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleJobAction(job.id, 'complete')}
+                              >
+                                Mark Complete
+                              </Button>
+                            )}
+                            <div className="flex gap-2 pt-2">
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Phone className="h-4 w-4 mr-1" />
+                                Call
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                Chat
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No jobs found</h3>
+                  <p className="text-gray-500">You don't have any jobs in this category yet.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pending">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Jobs</CardTitle>
+              <CardDescription>Jobs awaiting your action</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : filteredJobs.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredJobs.map((job) => (
+                    <Card key={job.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-bold text-lg">{job.services?.name || 'Service'}</h3>
+                              <Badge className={getStatusColor(job.status)}>
+                                {job.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-600 mb-1">{job.services?.description || 'Service description'}</p>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{new Date(job.scheduled_date).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{job.scheduled_time}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{job.address || 'Address not specified'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4" />
+                                <span>₹{job.total_amount}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2">
+                              <p className="text-sm font-medium">Customer: {job.customers?.full_name || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">Contact: {job.customers?.phone || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 min-w-[150px]">
+                            {job.status === 'pending' && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleJobAction(job.id, 'accept')}
+                                >
+                                  Accept
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => handleJobAction(job.id, 'cancel')}
+                                >
+                                  Decline
+                                </Button>
+                              </>
+                            )}
+                            {job.status === 'accepted' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleJobAction(job.id, 'start')}
+                              >
+                                Start Job
+                              </Button>
+                            )}
+                            <div className="flex gap-2 pt-2">
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Phone className="h-4 w-4 mr-1" />
+                                Call
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                Chat
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No pending jobs</h3>
+                  <p className="text-gray-500">You don't have any pending jobs at the moment.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="completed">
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Jobs</CardTitle>
+              <CardDescription>Jobs you have successfully completed</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : filteredJobs.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredJobs.map((job) => (
+                    <Card key={job.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-bold text-lg">{job.services?.name || 'Service'}</h3>
+                              <Badge className={getStatusColor(job.status)}>
+                                {job.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-600 mb-1">{job.services?.description || 'Service description'}</p>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{new Date(job.scheduled_date).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{job.scheduled_time}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{job.address || 'Address not specified'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4" />
+                                <span>₹{job.total_amount}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2">
+                              <p className="text-sm font-medium">Customer: {job.customers?.full_name || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">Contact: {job.customers?.phone || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 min-w-[150px]">
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <FileText className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <MessageCircle className="h-4 w-4 mr-1" />
+                              Chat Review
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No completed jobs</h3>
+                  <p className="text-gray-500">You haven't completed any jobs yet.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="cancelled">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cancelled Jobs</CardTitle>
+              <CardDescription>Jobs that were cancelled</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : filteredJobs.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredJobs.map((job) => (
+                    <Card key={job.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-bold text-lg">{job.services?.name || 'Service'}</h3>
+                              <Badge className={getStatusColor(job.status)}>
+                                {job.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-600 mb-1">{job.services?.description || 'Service description'}</p>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{new Date(job.scheduled_date).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{job.scheduled_time}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{job.address || 'Address not specified'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4" />
+                                <span>₹{job.total_amount}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2">
+                              <p className="text-sm font-medium">Customer: {job.customers?.full_name || 'N/A'}</p>
+                              <p className="text-sm text-gray-500">Contact: {job.customers?.phone || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 min-w-[150px]">
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <FileText className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No cancelled jobs</h3>
+                  <p className="text-gray-500">You don't have any cancelled jobs.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Job Statistics */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{jobs.length}</div>
+            <p className="text-xs text-muted-foreground">All time jobs</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Completed Jobs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{jobs.filter(job => job.status === 'completed').length}</div>
+            <p className="text-xs text-muted-foreground">Successfully completed</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {jobs.length > 0 
+                ? Math.round((jobs.filter(job => job.status === 'completed').length / jobs.length) * 100) 
+                : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground">Success rate</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default WorkerJobsPage;

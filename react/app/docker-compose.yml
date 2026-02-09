@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  # ======================
+  # Frontend Service
+  # ======================
+  rahi-web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    ports:
+      - "80:80"
+    env_file:
+      - .env
+    depends_on:
+      rahi-api:
+        condition: service_healthy
+    networks:
+      - rahi-network
+    restart: always
+
+  # ======================
+  # Backend API Service
+  # ======================
+  rahi-api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rahi-network
+    restart: always
+
+  # ======================
+  # MongoDB Database
+  # ======================
+  mongo:
+    image: mongo:7
+    container_name: rahi-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rahi-network
+    restart: always
+
+# ======================
+# Volumes
+# ======================
+volumes:
+  mongo_data:
+
+# ======================
+# Network
+# ======================
+networks:
+  rahi-network:
+    driver: bridge

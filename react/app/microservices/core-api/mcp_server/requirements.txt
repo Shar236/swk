@@ -1,0 +1,4 @@
+fastmcp
+supabase
+pydantic
+python-dotenv
