@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 console.log('Testing connection...');
-const uri = process.env.MONGO_URI;
+const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 console.log('URI:', uri ? uri.replace(/:([^:@]+)@/, ':****@') : 'undefined');
 
 if (!uri) {
