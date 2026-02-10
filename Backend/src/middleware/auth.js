@@ -8,24 +8,24 @@ export const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'changeme');
-      
+
       const db = getDb();
       const user = await db.collection('users').findOne({ _id: new ObjectId(decoded.id) });
-      
+
       if (!user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
       const { password, ...userWithoutPassword } = user;
       req.user = userWithoutPassword;
-      
+
       next();
     } catch (err) {
       console.error(err);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
-  
+
   if (!token) {
     res.status(401).json({ message: 'Not authorized, no token' });
   }

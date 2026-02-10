@@ -1,10 +1,18 @@
-import mongoose from 'mongoose';
+import { getDb } from '../config/db.js';
 
-const CustomerSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  full_name: { type: String },
-  phone: { type: String },
-  email: { type: String },
-}, { timestamps: true });
+const COLLECTION = 'customers';
 
-export default mongoose.model('Customer', CustomerSchema);
+export const Customer = {
+  collection: () => getDb().collection(COLLECTION),
+
+  validate: (data) => {
+    const errors = [];
+    if (!data.user) errors.push('User ID is required');
+    return errors;
+  },
+
+  createIndexes: async () => {
+    const db = getDb();
+    await db.collection(COLLECTION).createIndex({ user: 1 }, { unique: true });
+  }
+};

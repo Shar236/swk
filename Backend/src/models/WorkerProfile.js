@@ -7,12 +7,12 @@ export const WorkerProfile = {
 
   validate: (data) => {
     const errors = [];
-    if (!data.user_id) errors.push('User ID is required');
+    if (!data.user) errors.push('User ID is required');
     return errors;
   },
 
   createIndexes: async () => {
     const db = getDb();
-    await db.collection(COLLECTION).createIndex({ user_id: 1 }, { unique: true });
+    await db.collection(COLLECTION).createIndex({ user: 1 }, { unique: true });
   }
 };
