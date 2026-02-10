@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 
 interface WalletTransaction {
@@ -32,8 +32,8 @@ export function useWalletTransactions() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('wallet_transactions')
+      const { data, error } = await db
+        .collection('wallet_transactions')
         .select('*')
         .eq('worker_id', user.id)
         .order('created_at', { ascending: false })
@@ -51,7 +51,7 @@ export function useWalletTransactions() {
 
   const withdrawToUPI = async (amount: number, upiId: string) => {
     if (!user) return { error: new Error('Not authenticated') };
-    
+
     if (amount < 100) {
       toast({
         title: 'Minimum Withdrawal',
@@ -65,8 +65,8 @@ export function useWalletTransactions() {
 
     try {
       // Create withdrawal transaction
-      const { error } = await supabase
-        .from('wallet_transactions')
+      const { error } = await db
+        .collection('wallet_transactions')
         .insert({
           worker_id: user.id,
           amount: -amount,
@@ -79,15 +79,15 @@ export function useWalletTransactions() {
       if (error) throw error;
 
       // Update wallet balance in worker_profiles manually
-      const { data: profile } = await supabase
-        .from('worker_profiles')
+      const { data: profile } = await db
+        .collection('worker_profiles')
         .select('wallet_balance')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
-        await supabase
-          .from('worker_profiles')
+        await db
+          .collection('worker_profiles')
           .update({ wallet_balance: (profile.wallet_balance || 0) - amount })
           .eq('user_id', user.id);
       }
@@ -116,8 +116,8 @@ export function useWalletTransactions() {
     today.setHours(0, 0, 0, 0);
 
     return transactions
-      .filter(t => 
-        t.transaction_type === 'earning' && 
+      .filter(t =>
+        t.transaction_type === 'earning' &&
         new Date(t.created_at) >= today
       )
       .reduce((sum, t) => sum + t.amount, 0);
@@ -128,8 +128,8 @@ export function useWalletTransactions() {
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     return transactions
-      .filter(t => 
-        t.transaction_type === 'earning' && 
+      .filter(t =>
+        t.transaction_type === 'earning' &&
         new Date(t.created_at) >= weekAgo
       )
       .reduce((sum, t) => sum + t.amount, 0);

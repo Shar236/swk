@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, DollarSign, TrendingUp, TrendingDown, Wallet, CreditCard, IndianRupee } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -41,8 +41,8 @@ const WorkerEarningsPage = () => {
       setLoading(true);
 
       // Fetch worker profile to get worker ID
-      const { data: workerProfile, error: profileError } = await supabase
-        .from('worker_profiles')
+      const { data: workerProfile, error: profileError } = await db
+        .collection('worker_profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
@@ -60,8 +60,8 @@ const WorkerEarningsPage = () => {
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       
       // Fetch today's completed jobs
-      const { data: todayJobs, error: todayError } = await supabase
-        .from('bookings')
+      const { data: todayJobs, error: todayError } = await db
+        .collection('bookings')
         .select('total_price')
         .eq('worker_id', workerProfile.id)
         .eq('status', 'completed')
@@ -73,8 +73,8 @@ const WorkerEarningsPage = () => {
       }
 
       // Fetch weekly completed jobs
-      const { data: weeklyJobs, error: weeklyError } = await supabase
-        .from('bookings')
+      const { data: weeklyJobs, error: weeklyError } = await db
+        .collection('bookings')
         .select('total_price')
         .eq('worker_id', workerProfile.id)
         .eq('status', 'completed')
@@ -85,8 +85,8 @@ const WorkerEarningsPage = () => {
       }
 
       // Fetch monthly completed jobs
-      const { data: monthlyJobs, error: monthlyError } = await supabase
-        .from('bookings')
+      const { data: monthlyJobs, error: monthlyError } = await db
+        .collection('bookings')
         .select('total_price')
         .eq('worker_id', workerProfile.id)
         .eq('status', 'completed')
@@ -97,8 +97,8 @@ const WorkerEarningsPage = () => {
       }
 
       // Fetch all completed jobs for total earnings
-      const { data: totalJobs, error: totalError } = await supabase
-        .from('bookings')
+      const { data: totalJobs, error: totalError } = await db
+        .collection('bookings')
         .select('total_price')
         .eq('worker_id', workerProfile.id)
         .eq('status', 'completed');
@@ -108,8 +108,8 @@ const WorkerEarningsPage = () => {
       }
 
       // Calculate projected earnings for today (based on pending/in-progress jobs)
-      const { data: projectedJobs, error: projectedError } = await supabase
-        .from('bookings')
+      const { data: projectedJobs, error: projectedError } = await db
+        .collection('bookings')
         .select('total_price')
         .eq('worker_id', workerProfile.id)
         .in('status', ['pending', 'accepted', 'in_progress']);
@@ -142,8 +142,8 @@ const WorkerEarningsPage = () => {
       });
 
       // Fetch transactions (completed jobs)
-      const { data: transactionData, error: transactionError } = await supabase
-        .from('bookings')
+      const { data: transactionData, error: transactionError } = await db
+        .collection('bookings')
         .select(`
           id,
           total_price,
@@ -163,8 +163,8 @@ const WorkerEarningsPage = () => {
       }
 
       // Fetch payout history
-      const { data: payoutData, error: payoutError } = await (supabase as any)
-        .from('payouts')
+      const { data: payoutData, error: payoutError } = await db
+        .collection('payouts')
         .select('*')
         .eq('worker_id', workerProfile.id)
         .order('created_at', { ascending: false })

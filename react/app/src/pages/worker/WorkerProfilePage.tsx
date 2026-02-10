@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, MapPin, Phone, Mail, Calendar, IndianRupee, ShieldCheck, Clock, Edit3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 
 const WorkerProfilePage = () => {
   const { user, profile } = useAuth();
@@ -42,8 +42,8 @@ const WorkerProfilePage = () => {
       setLoading(true);
 
       // Fetch worker profile
-      const { data: workerData, error: workerError } = await supabase
-        .from('worker_profiles')
+      const { data: workerData, error: workerError } = await db
+        .collection('worker_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
@@ -84,8 +84,8 @@ const WorkerProfilePage = () => {
 
     try {
       // Update profile in profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
+      const { error: profileError } = await db
+        .collection('profiles')
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
@@ -102,8 +102,8 @@ const WorkerProfilePage = () => {
       }
 
       // Update worker profile in worker_profiles table
-      const { error: workerProfileError } = await supabase
-        .from('worker_profiles')
+      const { error: workerProfileError } = await db
+        .collection('worker_profiles')
         .update({
           bio: formData.bio,
           experience_years: formData.experience_years,

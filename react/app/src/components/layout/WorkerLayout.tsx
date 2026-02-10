@@ -19,7 +19,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+// import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/db";
 
 const WorkerLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -51,8 +52,8 @@ const WorkerLayout = () => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('worker_profiles')
+      const { data, error } = await db
+        .collection('worker_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
@@ -71,8 +72,8 @@ const WorkerLayout = () => {
     
     try {
       const newStatus = isOnline ? 'offline' : 'online';
-      const { error } = await supabase
-        .from('worker_profiles')
+      const { error } = await db
+        .collection('worker_profiles')
         .update({ status: newStatus })
         .eq('user_id', user.id);
       

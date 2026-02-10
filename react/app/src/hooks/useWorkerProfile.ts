@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 
 interface WorkerProfile {
@@ -36,8 +36,8 @@ export function useWorkerProfile() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('worker_profiles')
+      const { data, error } = await db
+        .collection('worker_profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -58,18 +58,18 @@ export function useWorkerProfile() {
     if (!workerProfile) return { error: new Error('No worker profile') };
 
     try {
-      const { error } = await supabase
-        .from('worker_profiles')
-        .update({ 
-          status, 
-          last_online_at: status === 'online' ? new Date().toISOString() : undefined 
+      const { error } = await db
+        .collection('worker_profiles')
+        .update({
+          status,
+          last_online_at: status === 'online' ? new Date().toISOString() : undefined
         })
         .eq('id', workerProfile.id);
 
       if (error) throw error;
 
       setWorkerProfile(prev => prev ? { ...prev, status } : null);
-      
+
       toast({
         title: status === 'online' ? 'You are now online' : 'You are now offline',
         description: status === 'online' ? 'You will receive job requests' : 'You will not receive new job requests',

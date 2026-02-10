@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { Layout } from '@/components/layout/Layout';
 
 const mockBookings = [
@@ -77,8 +78,8 @@ export default function EnhancedCustomerDashboard() {
       
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('bookings')
+        const { data, error } = await db
+          .collection('bookings')
           .select(`
             *,
             service_categories(name, name_hi)

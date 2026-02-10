@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Extend Leaflet to fix default icon issues
@@ -105,8 +105,8 @@ export default function ThekedarMapHub() {
 
     try {
       // Fetch team members with location data
-      const { data: teamData, error: teamError } = await supabase
-        .from('thekedar_teams')
+      const { data: teamData, error: teamError } = await db
+        .collection('thekedar_teams')
         .select(`
           id,
           worker_id,
@@ -122,8 +122,8 @@ export default function ThekedarMapHub() {
       }
 
       // Fetch site visits with customer details
-      const { data: visitsData, error: visitsError } = await supabase
-        .from('site_visits')
+      const { data: visitsData, error: visitsError } = await db
+        .collection('site_visits')
         .select(`
           id,
           customer_id,

@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, User, Phone, MessageCircle, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { db } from '@/lib/db';
+// import { Database } from '@/integrations/supabase/types';
 
 interface Booking {
   id: string;
   category_id: string;  // Based on the schema, it's category_id not service_id
   customer_id: string;
-  status: Database['public']['Enums']['booking_status'] | null;
+  status: 'pending' | 'matched' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | null;
   scheduled_at: string | null;  // Based on schema, it's scheduled_at not separate date/time
   address: string;
   total_price: number;  // Based on schema, it's total_price not total_amount
@@ -47,8 +47,8 @@ const WorkerSchedulePage = () => {
       setLoading(true);
 
       // Fetch worker profile to get worker ID
-      const { data: workerProfile, error: profileError } = await supabase
-        .from('worker_profiles')
+      const { data: workerProfile, error: profileError } = await db
+        .collection('worker_profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
@@ -60,8 +60,8 @@ const WorkerSchedulePage = () => {
       }
 
       // Fetch schedule for the selected date
-      const { data: scheduleData, error: scheduleError } = await supabase
-        .from('bookings')
+      const { data: scheduleData, error: scheduleError } = await db
+        .collection('bookings')
         .select(
           'id, category_id, customer_id, status, scheduled_at, address, total_price'
         )
@@ -120,8 +120,8 @@ const WorkerSchedulePage = () => {
           return;
       }
 
-      const { error } = await supabase
-        .from('bookings')
+      const { error } = await db
+        .collection('bookings')
         .update({ status: newStatus as any })
         .eq('id', jobId);
 

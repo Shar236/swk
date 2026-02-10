@@ -16,9 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Database } from '@/integrations/supabase/types';
+// import type { Database } from '@/integrations/supabase/types';
 
 // Extend Leaflet to fix default icon issues
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -32,7 +32,7 @@ interface Job {
   id: string;
   category_id: string;
   customer_id: string;
-  status: Database['public']['Enums']['booking_status'] | null;
+  status: 'pending' | 'matched' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | null;
   address: string;
   latitude: number | null;
   longitude: number | null;
@@ -79,8 +79,8 @@ export default function WorkerMapDashboard() {
     if (!user) return;
 
     try {
-      const { data: workerProfile, error: profileError } = await supabase
-        .from('worker_profiles')
+      const { data: workerProfile, error: profileError } = await db
+        .collection('worker_profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
@@ -91,8 +91,8 @@ export default function WorkerMapDashboard() {
       }
 
       // Fetch upcoming jobs with customer details
-      const { data: jobsData, error: jobsError } = await supabase
-        .from('bookings')
+      const { data: jobsData, error: jobsError } = await db
+        .collection('bookings')
         .select(`
           id, 
           category_id, 

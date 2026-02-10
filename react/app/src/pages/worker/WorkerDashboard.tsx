@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, MapPin, Package, DollarSign, Bell, Clock, CheckCircle, AlertCircle, MessageCircle, TrendingUp, ArrowRight, BarChart3, BellRing, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import ChatComponent from '@/components/chat/ChatComponent';
 import { toast } from 'sonner';
 import {
@@ -145,8 +146,8 @@ const WorkerDashboard = () => {
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
-          .from('bookings')
+        const { data, error } = await db
+          .collection('bookings')
           .select(`
             *,
             service_categories(name, name_hi)

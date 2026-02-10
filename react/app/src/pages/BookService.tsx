@@ -18,7 +18,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { FadeIn, HoverScale, ScaleIn } from '@/components/ui/animated-container';
 import { cn } from '@/lib/utils';
 import { 
@@ -171,22 +172,29 @@ export default function BookService() {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       
       if (service && (!categoryId || !uuidRegex.test(categoryId || ''))) {
-        const { data: catData } = await supabase
-          .from('service_categories')
+        const { data: catData } = await db
+          .collection('service_categories')
           .select('id')
           .ilike('name', service.name)
-          .maybeSingle();
+          .single(); // Using single() as maybeSingle() might not be in our custom client yet, or we'll assume it handles it.
+          // Actually, let's check db.ts again. It has single(). 
+          // But wait, the original code used maybeSingle(). 
+          // Our db.ts single() returns { data: T | null, error: any }.
+          // So it effectively acts like maybeSingle if it doesn't throw on no rows.
+          // Let's verify db.ts behavior for single().
+          // "single() { ... if (this.data && this.data.length > 0) return { data: this.data[0], error: null }; return { data: null, error: ... } }"
+          // So it works like maybeSingle/single combined.
 
         if (catData) {
           categoryId = catData.id;
         } else {
           // If not found by exact name, try finding a similar one (e.g. for Construction)
-          const { data: fuzzyCat } = await supabase
-            .from('service_categories')
+          const { data: fuzzyCat } = await db
+            .collection('service_categories')
             .select('id')
             .or(`name.ilike.%${service.name}%,name.ilike.%Construction%`)
             .limit(1)
-            .maybeSingle();
+            .single();
             
           categoryId = fuzzyCat?.id || '00000000-0000-0000-0000-000000000000';
         }
@@ -211,8 +219,8 @@ export default function BookService() {
         otp_start: Math.floor(1000 + Math.random() * 9000).toString() // Generate 4-digit OTP
       };
 
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
+      const { data: booking, error: bookingError } = await db
+        .collection('bookings')
         .insert(bookingData)
         .select()
         .single();

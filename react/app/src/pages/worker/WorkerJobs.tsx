@@ -17,7 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJobRequests } from '@/hooks/useJobRequests';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { MapPin, Clock, Phone, User, CheckCircle, Play, Navigation } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Navigate } from 'react-router-dom';
@@ -39,8 +40,8 @@ export default function WorkerJobs() {
     const fetchCompletedJobs = async () => {
       if (!user) return;
       
-      const { data } = await supabase
-        .from('bookings')
+      const { data } = await db
+        .collection('bookings')
         .select(`
           *,
           customer:profiles!bookings_customer_id_fkey(full_name, phone),

@@ -17,7 +17,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { toast } from 'sonner';
 
 const ThekedarSiteVisits = () => {
@@ -50,8 +50,8 @@ const ThekedarSiteVisits = () => {
     
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('site_visits')
+      const { data, error } = await db
+        .collection('site_visits')
         .select(`
           *,
           bookings!inner(*),
@@ -77,8 +77,8 @@ const ThekedarSiteVisits = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('site_visits')
+      const { data, error } = await db
+        .collection('site_visits')
         .insert({
           thekedar_id: user.id,
           customer_id: newVisit.customerId,

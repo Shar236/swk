@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -106,14 +106,14 @@ const ThekedarOnboardingPage = () => {
     
     try {
       // 1. Update Profile Role
-      await supabase
-        .from('profiles')
+      await db
+        .collection('profiles')
         .update({ role: 'thekedar' })
         .eq('id', user.id);
 
       // 2. Create Thekedar Profile
-      const { error: profileError } = await (supabase as any)
-        .from('thekedar_profiles')
+      const { error: profileError } = await db
+        .collection('thekedar_profiles')
         .upsert({
           user_id: user.id,
           business_name: formData.business.name,

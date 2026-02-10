@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, MapPin, User, Clock, CheckCircle, AlertCircle, Package } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 
 const JobLog = () => {
   const { user, profile } = useAuth();
@@ -29,8 +30,8 @@ const JobLog = () => {
       setLoading(true);
 
       // Fetch worker profile to get worker ID
-      const { data: workerProfile, error: profileError } = await supabase
-        .from('worker_profiles')
+      const { data: workerProfile, error: profileError } = await db
+        .collection('worker_profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
@@ -42,8 +43,8 @@ const JobLog = () => {
       }
 
       // Fetch all bookings for this worker
-      const { data: jobsData, error: jobsError } = await supabase
-        .from('bookings')
+      const { data: jobsData, error: jobsError } = await db
+        .collection('bookings')
         .select(`
           id,
           service_id,

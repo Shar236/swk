@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 // Realtime (Supabase) removed; using local in-memory notifications for now
 // For production integrate websockets or server-sent events
 
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
@@ -222,13 +222,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Clean up subscriptions on unmount
   useEffect(() => {
-    return () => {
-      if ((supabase as any)?.removeChannel) {
-        channels.forEach(channel => {
-          (supabase as any).removeChannel(channel);
-        });
-      }
-    };
+    // Realtime channel removing not implemented
+    return () => {};
   }, [channels]);
 
   // Request notification permission

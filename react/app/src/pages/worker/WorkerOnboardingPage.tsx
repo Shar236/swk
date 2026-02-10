@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -143,14 +143,14 @@ const WorkerOnboardingPage = () => {
     
     try {
       // 1. Update Profile Role
-      await supabase
-        .from('profiles')
+      await db
+        .collection('profiles')
         .update({ role: 'worker' })
         .eq('id', user.id);
 
       // 2. Create Worker Profile
-      const { error: workerError } = await supabase
-        .from('worker_profiles')
+      const { error: workerError } = await db
+        .collection('worker_profiles')
         .upsert({
           user_id: user.id,
           experience_years: parseInt(formData.professional.experience) || 0,

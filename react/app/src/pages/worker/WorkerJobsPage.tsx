@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Package, Clock, CheckCircle, AlertCircle, FileText, Phone, MessageCircle, DollarSign } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 
 const WorkerJobsPage = () => {
   const { user, profile } = useAuth();
@@ -27,8 +27,8 @@ const WorkerJobsPage = () => {
       setLoading(true);
       
       // Fetch worker profile to get worker ID
-      const { data: workerProfile, error: profileError } = await supabase
-        .from('worker_profiles')
+      const { data: workerProfile, error: profileError } = await db
+        .collection('worker_profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
@@ -40,8 +40,8 @@ const WorkerJobsPage = () => {
       }
 
       // Fetch all bookings for this worker
-      const { data: jobsData, error: jobsError } = await supabase
-        .from('bookings')
+      const { data: jobsData, error: jobsError } = await db
+        .collection('bookings')
         .select(`
           id,
           service_id,
@@ -131,8 +131,8 @@ const WorkerJobsPage = () => {
           return;
       }
 
-      const { error } = await supabase
-        .from('bookings')
+      const { error } = await db
+        .collection('bookings')
         .update({ status: newStatus })
         .eq('id', jobId);
 

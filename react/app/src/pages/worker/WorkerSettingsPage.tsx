@@ -35,7 +35,7 @@ import {
   Upload
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 
 const WorkerSettingsPage = () => {
   const { user, profile } = useAuth();
@@ -122,8 +122,8 @@ const WorkerSettingsPage = () => {
       
       // Load worker profile data
       if (profile?.role === 'worker') {
-        const { data: workerProfile } = await supabase
-          .from('worker_profiles')
+        const { data: workerProfile } = await db
+          .collection('worker_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single();
@@ -164,8 +164,8 @@ const WorkerSettingsPage = () => {
     setSaving(true);
     try {
       // Update profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
+      const { error: profileError } = await db
+        .collection('profiles')
         .update({
           full_name: profileData.full_name,
           email: profileData.email,
@@ -181,8 +181,8 @@ const WorkerSettingsPage = () => {
       
       // Update worker_profiles table if worker
       if (profile?.role === 'worker') {
-        const { error: workerError } = await supabase
-          .from('worker_profiles')
+        const { error: workerError } = await db
+          .collection('worker_profiles')
           .update({
             bio: workerData.bio,
             experience_years: workerData.experience_years,

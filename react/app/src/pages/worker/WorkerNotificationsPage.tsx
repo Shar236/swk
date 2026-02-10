@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bell, Mail, Calendar, Package, AlertTriangle, CheckCircle, XCircle, MessageSquare, MoreVertical } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 
 const WorkerNotificationsPage = () => {
   const { user, profile } = useAuth();
@@ -26,8 +26,8 @@ const WorkerNotificationsPage = () => {
       setLoading(true);
 
       // Fetch notifications for the user
-      const { data: notificationsData, error: notificationsError } = await supabase
-        .from('notifications')
+      const { data: notificationsData, error: notificationsError } = await db
+        .collection('notifications')
         .select('*')
         .eq('recipient_id', user.id)
         .order('created_at', { ascending: false });
@@ -49,8 +49,8 @@ const WorkerNotificationsPage = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await db
+        .collection('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
 
@@ -75,8 +75,8 @@ const WorkerNotificationsPage = () => {
 
   const markAllAsRead = async () => {
     try {
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await db
+        .collection('notifications')
         .update({ is_read: true })
         .eq('recipient_id', user?.id)
         .eq('is_read', false);

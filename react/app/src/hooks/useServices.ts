@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { MOCK_SERVICES } from '@/data/mockServices';
 
@@ -24,30 +24,28 @@ export function useServices() {
     queryKey: ['services', language],
     queryFn: async () => {
       let dbData: any[] = [];
-      
-      if (supabase) {
-        try {
-          const { data, error } = await supabase
-            .from('service_categories')
-            .select('*')
-            .eq('is_active', true)
-            .order('display_order');
-          
-          if (!error && data) {
-            dbData = data;
-          }
-        } catch (e) {
-          console.warn('Supabase fetch failed, using mocks only.');
+
+      try {
+        const { data, error } = await db
+          .collection('service_categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order');
+
+        if (!error && data) {
+          dbData = data;
         }
+      } catch (e) {
+        console.warn('DB fetch failed, using mocks only.');
       }
-      
+
       const mappedDbData = dbData.map((service) => ({
         ...service,
-        localizedName: 
+        localizedName:
           language === 'hi' ? service.name_hi || service.name :
-          language === 'bn' ? service.name_bn || service.name :
-          language === 'gu' ? service.name_gu || service.name :
-          service.name,
+            language === 'bn' ? service.name_bn || service.name :
+              language === 'gu' ? service.name_gu || service.name :
+                service.name,
       }));
 
       // Merge with MOCK_SERVICES to ensure all categories are represented
@@ -60,13 +58,10 @@ export function useServiceById(id: string) {
   return useQuery({
     queryKey: ['service', id],
     queryFn: async () => {
-      if (!supabase) {
-        console.warn('Supabase client not initialized.');
-        return null;
-      }
-      
-      const { data, error } = await supabase
-        .from('service_categories')
+
+
+      const { data, error } = await db
+        .collection('service_categories')
         .select('*')
         .eq('id', id)
         .maybeSingle();
