@@ -9,5 +9,9 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src')
     }
+  },
+  // Add this section to fix the ReferenceError
+  define: {
+    'process.env': {}
   }
 })

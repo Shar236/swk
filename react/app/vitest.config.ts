@@ -13,4 +13,8 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  // Keep tests consistent with the browser build
+  define: {
+    'process.env': {}
+  }
 });
