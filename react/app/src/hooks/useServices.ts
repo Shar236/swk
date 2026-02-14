@@ -15,12 +15,13 @@ export interface ServiceCategory {
   is_active: boolean;
   display_order: number;
   localizedName?: string;
+  category?: string;
 }
 
 export function useServices() {
   const { language } = useLanguage();
 
-  return useQuery({
+  return useQuery<ServiceCategory[]>({
     queryKey: ['services', language],
     queryFn: async () => {
       let dbData: any[] = [];
@@ -48,9 +49,17 @@ export function useServices() {
                 service.name,
       }));
 
-      // Merge with MOCK_SERVICES to ensure all categories are represented
-      return [...mappedDbData, ...MOCK_SERVICES];
+      // If DB has data, return it. Otherwise, return MOCK_SERVICES
+      if (mappedDbData.length > 0) {
+        return mappedDbData;
+      }
+
+      return MOCK_SERVICES;
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 }
 

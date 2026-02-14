@@ -14,7 +14,6 @@ import Services from "./pages/Services";
 import BookService from "./pages/BookService";
 import Tracking from "./pages/Tracking";
 import NotificationDemo from "./pages/NotificationDemo";
-import { TestChatbot } from "./pages/TestChatbot";
 import TestPage from "./pages/TestPage";
 import VoiceAssistantPage from "./pages/VoiceAssistantPage";
 
@@ -48,7 +47,6 @@ function App() {
                   <Route path="/book/:serviceId" element={<BookService />} />
                   <Route path="/tracking/:bookingId" element={<Tracking />} />
                   <Route path="/notifications/demo" element={<NotificationDemo />} />
-                  <Route path="/test-chatbot" element={<TestChatbot />} />
                   <Route path="/test" element={<TestPage />} />
                   <Route path="/voice-assistant" element={<VoiceAssistantPage />} />
                   <Route path="*" element={<NotFound />} />

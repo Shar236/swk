@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { KNOWLEDGE_BASE } from '@/data/knowledge';
 import { speechEngine, VOICE_PRESETS } from '@/integrations/ai/speech-engine';
-import { contextProvider } from '@/integrations/ai/context-provider';
+import { useChatContext } from '@/integrations/ai/context-provider';
 import { aiApi } from '@/integrations/ai/ai-api'; // Keep as fallback
 
 // --- CONSTANTS ---
@@ -41,6 +41,7 @@ export const ChatAssistant: React.FC = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
+  const { getChatContext } = useChatContext();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export const ChatAssistant: React.FC = () => {
 
     try {
       // Try backend API first
-      const context = await contextProvider.getChatContext();
+      const context = await getChatContext();
       
       // Call backend API with timeout and proper CORS settings
       const controller = new AbortController();
@@ -121,7 +122,7 @@ export const ChatAssistant: React.FC = () => {
         
         // Use fallback response from the existing AI system
         try {
-          const context = await contextProvider.getChatContext();
+          const context = await getChatContext();
           const fallbackResponse = await aiApi.sendMessage(text, context);
           
           console.debug('Local AI fallback response:', fallbackResponse);
@@ -164,7 +165,7 @@ export const ChatAssistant: React.FC = () => {
         console.warn('Backend processing error - trying fallback to local AI...');
         
         try {
-          const context = await contextProvider.getChatContext();
+          const context = await getChatContext();
           const fallbackResponse = await aiApi.sendMessage(text, context);
           
           // Check if the response contains navigation instructions

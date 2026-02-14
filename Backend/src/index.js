@@ -17,6 +17,7 @@ app.use(express.json());
 // Connect to MongoDB
 connectDB()
   .then(() => {
+    console.log("✅ Database connected successfully");
     // Health Check
     app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
@@ -33,5 +34,7 @@ connectDB()
     );
   })
   .catch((err) => {
-    console.error("Failed to start server due to DB connection error", err);
+    console.error("❌ Failed to start server due to DB connection error:", err.message);
+    console.error("Full error:", err);
+    process.exit(1);
   });

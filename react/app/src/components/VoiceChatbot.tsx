@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, Loader2 } from 'lucide-react';
 import { aiApi } from '@/integrations/ai/ai-api';
 import { speechEngine } from '@/integrations/ai/speech-engine';
-import { contextProvider } from '@/integrations/ai/context-provider';
+import { useChatContext } from '@/integrations/ai/context-provider';
 
 interface Message {
   id: string;
@@ -24,6 +24,7 @@ export function VoiceChatbot() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMicrophoneSupported, setIsMicrophoneSupported] = useState(true);
   const recognitionRef = useRef<any>(null);
+  const { getChatContext } = useChatContext();
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize speech recognition
@@ -135,7 +136,7 @@ export function VoiceChatbot() {
 
     try {
       // Get context for the AI
-      const context = await contextProvider.getChatContext();
+      const context = await getChatContext();
       
       // Get AI response
       const aiResponse = await aiApi.sendMessage(messageText, context);

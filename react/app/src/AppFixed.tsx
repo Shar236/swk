@@ -14,7 +14,6 @@ import Services from "./pages/Services";
 import BookService from "./pages/BookService";
 import Tracking from "./pages/Tracking";
 import NotificationDemo from "./pages/NotificationDemo";
-import { TestChatbot } from "./pages/TestChatbot";
 import TestPage from "./pages/TestPage";
 
 // Initialize QueryClient outside component to prevent recreation
@@ -46,7 +45,6 @@ function App() {
                   <Route path="/book/:serviceId" element={<BookService />} />
                   <Route path="/tracking/:bookingId" element={<Tracking />} />
                   <Route path="/notifications/demo" element={<NotificationDemo />} />
-                  <Route path="/test-chatbot" element={<TestChatbot />} />
                   <Route path="/test" element={<TestPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

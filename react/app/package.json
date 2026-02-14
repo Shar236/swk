@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "type-check": "tsc --noEmit",
     "quality:check": "node scripts/code-quality-check.mjs",
     "quality:db": "echo 'Use: /design schema for [your-table]' in chat",
     "quality:frontend": "echo 'Use: /review [file-path] in chat'"

@@ -33,7 +33,7 @@ export class AiApi {
     onStream?: (chunk: string) => void
   ): Promise<string> {
     const messageId = uuidv4();
-    
+
     // Add user message to history
     this.addMessage({
       id: messageId,
@@ -101,8 +101,8 @@ export class AiApi {
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
       });
@@ -118,23 +118,23 @@ export class AiApi {
       }
 
       const data = await response.json();
-      
+
       if (data.error) {
         console.error('Gemini API error:', data.error);
         return this.getMockResponse(message, context);
       }
-      
+
       if (!data.candidates || data.candidates.length === 0) {
         return this.getMockResponse(message, context);
       }
-      
+
       const firstCandidate = data.candidates[0];
       if (!firstCandidate.content || !firstCandidate.content.parts || firstCandidate.content.parts.length === 0) {
         return this.getMockResponse(message, context);
       }
-      
+
       const assistantMessage = firstCandidate.content.parts[0].text || 'I apologize, I could not generate a response.';
-      
+
       this.addMessage({
         id: uuidv4(),
         role: 'assistant',
@@ -152,11 +152,11 @@ export class AiApi {
 
   private getMockResponse(message: string, context: ChatContext): string {
     const lowerMessage = message.toLowerCase();
-    
+
     if (lowerMessage.includes('book') || lowerMessage.includes('hire') || lowerMessage.includes('electrician') || lowerMessage.includes('plumber') || lowerMessage.includes('carpenter')) {
       return "I can help you with that! To book a professional like an electrician, please go to our Services page at [/services](/services). You can select your location and choose from various experts!";
     }
-    
+
     if (lowerMessage.includes('payment') || lowerMessage.includes('pay') || lowerMessage.includes('charge') || lowerMessage.includes('cost')) {
       return "Once you select a service and a worker from the [/services](/services) page, you will be guided to the booking summary where you can confirm details and proceed to secure payment.";
     }
@@ -165,12 +165,20 @@ export class AiApi {
       return "You can track your active bookings in the [/tracking](/tracking) section. It will show you the real-time location of your assigned professional.";
     }
 
+    if (lowerMessage.includes('login') || lowerMessage.includes('register') || lowerMessage.includes('sign up')) {
+      return "To access all features, please [/login](/login) or [/register](/register) for a new account. You can join as a Customer, Worker, or Partner!";
+    }
+
     if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('namaste')) {
       return "Namaste! I'm your RAHI Assistant. I can help you book services, track orders, or answer questions about our ethical platform. How can I guide you today? 🇮🇳";
     }
 
     if (lowerMessage.includes('about') || lowerMessage.includes('mission') || lowerMessage.includes('rahi')) {
       return "RAHI is an ethical gig-economy platform focused on worker dignity. We offer same-day payouts, low commissions (8-12%), and no penalties for workers. We're currently serving Tier-2 and Tier-3 cities.";
+    }
+
+    if (lowerMessage.includes('assist') || lowerMessage.includes('help') || lowerMessage.includes('support') || lowerMessage.includes('what can you do')) {
+      return "I can assist you with:\n1. Finding local professionals (Plumbers, Electricians, etc.)\n2. Tracking your active bookings\n3. Registering as a worker or customer\n\nSimply tell me what you need, like 'I need a plumber' or 'Where is my worker?'";
     }
 
     return "I'm here to help you navigate RAHI. You can find services at [/services](/services), track orders at [/tracking](/tracking), or log in at [/login](/login). What would you like to do?";

@@ -1,18 +1,5 @@
-import React from 'react';
-import { 
-  Droplets, 
-  Zap, 
-  Hammer, 
-  Paintbrush, 
-  Grid3X3, 
-  Settings, 
-  HardHat, 
-  Tent, 
-  Sparkles,
-  IndianRupee,
-  Info,
-  CheckCircle 
-} from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search } from 'lucide-react';
 
 interface ServiceCardProps {
   serviceName: string;
@@ -20,143 +7,181 @@ interface ServiceCardProps {
   price: number;
   category: string;
   extraInfo?: string;
-  language?: 'en' | 'hi';
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({
-  serviceName,
-  description,
-  price,
-  category,
-  extraInfo = "Material cost extra",
-  language = 'en'
-}) => {
-  // Mapping category to icons
-  const getIcon = (cat: string) => {
-    const iconMap: Record<string, React.ElementType> = {
-      'plumber': Droplets,
-      'electrician': Zap,
-      'carpenter': Hammer,
-      'painter': Paintbrush,
-      'tiles installer': Grid3X3,
-      'appliance repair': Settings,
-      'construction mazdoor': HardHat,
-      'tent house': Tent,
-      'cleaning': Sparkles,
-      'ac service': Settings,
-      'default': Settings
-    };
-    
-    const IconComponent = iconMap[cat.toLowerCase()] || iconMap.default;
-    return <IconComponent className="h-16 w-16 text-blue-500" />;
-  };
+const ServiceCard: React.FC<ServiceCardProps> = ({ serviceName, description, price, category, extraInfo }) => {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 border">
+      <h3 className="text-lg font-semibold mb-2">{serviceName}</h3>
+      <p className="text-gray-600 mb-2">{description}</p>
+      <p className="text-sm text-gray-500 mb-2">Category: {category}</p>
+      <p className="text-xl font-bold text-green-600">₹{price}</p>
+      {extraInfo && <p className="text-sm text-gray-400 mt-2">{extraInfo}</p>}
+    </div>
+  );
+};
 
-  // Translations
-  const translations = {
-    en: {
-      startsAt: "Starts at",
-      inspectionIncluded: "Inspection included",
-      materialCostExtra: "Material cost extra"
-    },
-    hi: {
-      startsAt: "शुरू होता है",
-      inspectionIncluded: "निरीक्षण शामिल",
-      materialCostExtra: "सामग्री लागत अतिरिक्त"
+const servicesData = [
+  {
+    serviceName: "Switch Repair",
+    description: "Fix or replace faulty switches & sockets",
+    price: 99,
+    category: "electrician"
+  },
+  {
+    serviceName: "Tap Repair",
+    description: "Fix leaking taps and fittings",
+    price: 149,
+    category: "plumber"
+  },
+  {
+    serviceName: "AC Service",
+    description: "Basic AC cleaning and inspection",
+    price: 299,
+    category: "appliance repair"
+  },
+  {
+    serviceName: "Wall Painting",
+    description: "Single room paint service",
+    price: 799,
+    category: "painter"
+  }
+];
+
+const ServiceMarketplace = () => {
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [priceFilter, setPriceFilter] = useState('all');
+  const [sortOption, setSortOption] = useState('default');
+
+  // 🔥 Debounce (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // 🚀 Optimized Filtering + Sorting
+  const filteredServices = useMemo(() => {
+    let result = [...servicesData];
+
+    // Search
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
+      result = result.filter((service) =>
+        service.serviceName.toLowerCase().includes(query) ||
+        service.description.toLowerCase().includes(query) ||
+        service.category.toLowerCase().includes(query)
+      );
     }
-  };
 
-  const t = translations[language];
+    // Category
+    if (categoryFilter !== 'all') {
+      result = result.filter(
+        (service) => service.category === categoryFilter
+      );
+    }
+
+    // Price Filter
+    if (priceFilter === 'under200') {
+      result = result.filter((service) => service.price < 200);
+    }
+    if (priceFilter === '200to500') {
+      result = result.filter(
+        (service) => service.price >= 200 && service.price <= 500
+      );
+    }
+    if (priceFilter === 'above500') {
+      result = result.filter((service) => service.price > 500);
+    }
+
+    // Sorting
+    if (sortOption === 'low') {
+      result.sort((a, b) => a.price - b.price);
+    }
+    if (sortOption === 'high') {
+      result.sort((a, b) => b.price - a.price);
+    }
+
+    return result;
+  }, [debouncedSearch, categoryFilter, priceFilter, sortOption]);
 
   return (
-    <div className="w-full max-w-xs mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-transform duration-300 hover:shadow-xl hover:-translate-y-1">
-      {/* Top section with icon */}
-      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="flex justify-center mb-4">
-          <div className="bg-white rounded-full p-4 shadow-md">
-            {getIcon(category)}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+
+        {/* 🔎 SEARCH */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
+
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-3 rounded-xl border border-gray-200"
+          >
+            <option value="all">All Categories</option>
+            <option value="electrician">Electrician</option>
+            <option value="plumber">Plumber</option>
+            <option value="painter">Painter</option>
+            <option value="appliance repair">Appliance Repair</option>
+          </select>
+
+          {/* Price Filter */}
+          <select
+            value={priceFilter}
+            onChange={(e) => setPriceFilter(e.target.value)}
+            className="px-4 py-3 rounded-xl border border-gray-200"
+          >
+            <option value="all">All Prices</option>
+            <option value="under200">Under ₹200</option>
+            <option value="200to500">₹200 - ₹500</option>
+            <option value="above500">Above ₹500</option>
+          </select>
+
+          {/* Sort */}
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+            className="px-4 py-3 rounded-xl border border-gray-200"
+          >
+            <option value="default">Sort</option>
+            <option value="low">Price: Low → High</option>
+            <option value="high">Price: High → Low</option>
+          </select>
         </div>
-        
-        {/* Service name */}
-        <h3 className="text-xl font-bold text-center text-gray-800 mb-2">
-          {serviceName}
-        </h3>
-        
-        {/* Description */}
-        <p className="text-gray-600 text-center text-sm mb-4">
-          {description}
-        </p>
-      </div>
-      
-      {/* Price section */}
-      <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50">
-        <div className="flex items-center justify-center mb-2">
-          <div className="bg-green-100 rounded-full p-3">
-            <IndianRupee className="h-6 w-6 text-green-600" />
+
+        {/* 📦 GRID */}
+        {filteredServices.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredServices.map((service, index) => (
+              <ServiceCard key={index} {...service} />
+            ))}
           </div>
-        </div>
-        
-        <div className="text-center mb-1">
-          <span className="text-gray-500 text-sm font-medium">{t.startsAt}</span>
-        </div>
-        
-        <div className="text-center mb-4">
-          <span className="text-3xl font-bold text-green-700">₹{price}</span>
-        </div>
-      </div>
-      
-      {/* Extra info section */}
-      <div className="p-4 bg-gray-50 border-t border-gray-100">
-        <div className="flex items-center justify-center text-xs text-gray-500">
-          <Info className="h-3 w-3 mr-1" />
-          {extraInfo}
-        </div>
-      </div>
-      
-      {/* Bottom action */}
-      <div className="p-4 bg-white">
-        <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-medium text-sm hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg">
-          Book Now
-        </button>
+        ) : (
+          <div className="text-center text-gray-500 mt-20 text-lg">
+            😔 No services found.
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// Example usage
-const ServiceCardExample = () => {
-  return (
-    <div className="p-4 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto py-8">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Popular Services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ServiceCard 
-            serviceName="Switch Repair" 
-            description="Fix or replace faulty switches & sockets" 
-            price={99}
-            category="electrician"
-            extraInfo="Material cost extra"
-          />
-          
-          <ServiceCard 
-            serviceName="Tap Repair" 
-            description="Fix leaking taps and fittings" 
-            price={149}
-            category="plumber"
-            extraInfo="Inspection included"
-          />
-          
-          <ServiceCard 
-            serviceName="AC Service" 
-            description="Basic AC cleaning and inspection" 
-            price={299}
-            category="appliance repair"
-            extraInfo="Material cost extra"
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
+export default ServiceMarketplace;
 
-export default ServiceCard;
+export { ServiceCard };

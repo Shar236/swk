@@ -1,0 +1,10 @@
+src/components/chat/ChatAssistant.backend.backup.tsx(11,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/components/chat/ChatAssistant.continuous.backup.tsx(11,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/components/chat/ChatAssistant.debug.backup.tsx(10,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/components/chat/ChatAssistant.improved.backup.tsx(10,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/components/chat/ChatAssistant.tap-mode.backup.tsx(11,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/components/chat/ChatAssistant.tsx(10,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/components/VoiceChatbot.tsx(10,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.
+src/integrations/ai/context-provider.ts(46,7): error TS2322: Type '"customer" | "worker" | "thekedar" | "admin" | "guest"' is not assignable to type '"customer" | "worker" | "guest"'.
+  Type '"thekedar"' is not assignable to type '"customer" | "worker" | "guest"'.
+src/integrations/ai/test.ts(2,10): error TS2305: Module '"@/integrations/ai/context-provider"' has no exported member 'contextProvider'.

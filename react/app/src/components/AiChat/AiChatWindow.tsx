@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { aiApi, speechEngine, contextProvider } from '@/integrations/ai';
+import { aiApi, speechEngine, useChatContext } from '@/integrations/ai';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLocation } from 'react-router-dom';
@@ -31,6 +31,7 @@ export function AiChatWindow({ isOpen, onClose }: { isOpen: boolean; onClose: ()
   const { user, profile } = useAuth();
   const { language } = useLanguage();
   const location = useLocation();
+  const { getChatContext } = useChatContext();
 
   useEffect(() => {
     if (isOpen) {
@@ -55,7 +56,7 @@ export function AiChatWindow({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
   const loadInitialContext = async () => {
     try {
-      const context = await contextProvider.getChatContext();
+      const context = await getChatContext();
       const welcomeMessage = "Hello! I'm RAHI's assistant. How can I help you today? You can ask me about our services, how to book a professional, or learn more about RAHI.";
       
       setMessages([{
@@ -115,7 +116,7 @@ export function AiChatWindow({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
     try {
       // Get current context
-      const context = await contextProvider.getChatContext();
+      const context = await getChatContext();
       
       // Send message to AI
       const response = await aiApi.sendMessage(userMessage, context);
